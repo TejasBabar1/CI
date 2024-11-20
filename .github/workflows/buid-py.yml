@@ -27,7 +27,6 @@ jobs:
 
       - name: Build ARM64 Binary using Docker
         run: |
-          docker buildx build --platform linux/arm64/v8 -t pyinstaller-arm64 .
           docker run --rm --platform linux/arm64/v8 -v $PWD:/workspace -w /workspace python:3.10-slim bash -c "
             apt-get update && apt-get install -y python3-dev python3-pip build-essential libssl-dev libffi-dev
             pip install pyinstaller
