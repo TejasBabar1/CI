@@ -1,51 +1,36 @@
-name: Build PyInstaller Binaries
+name: Build Binary
 
 on:
   push:
     branches:
-      - main
-  workflow_dispatch: # Allows manual trigger
-  pull_request: # Runs on pull requests
+      - main  # Adjust based on the branches you want to trigger builds
+  pull_request:
 
 jobs:
-  build-pyinstaller:
-    runs-on: ubuntu-22.04
+  build:
+    runs-on: ubuntu-20.04  # Specify the Ubuntu version
+    architecture: aarch64  # Specify the architecture
+
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-      - name: Set up QEMU for aarch64 emulation
-        uses: docker/setup-qemu-action@v2
+      - name: Install Python
+        uses: actions/setup-python@v4
         with:
-          platforms: linux/arm64
+          python-version: '3.11'  # Choose the Python version you need
 
-      - name: Run on aarch64 Architecture
-        uses: uraimo/run-on-arch-action@v2
+      - name: Install PyInstaller
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+
+      - name: Build Binary
+        run: |
+          pyinstaller --onefile main.py
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
         with:
-          arch: arm64
-          distro: ubuntu20.04
-
-      - name: Install Python 3.11
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y python3.11 python3.11-venv python3.11-dev python3-pip
-          python3.11 --version
-
-      - name: Install Dependencies
-        run: |
-          python3.11 -m pip install --upgrade pip
-          python3.11 -m pip install -r requirements.txt
-
-      - name: Build PyInstaller Binary
-        run: |
-          python3.11 -m pip install pyinstaller
-          pyinstaller --onefile main.py # Replace 'main.py' with your entry script
-          mkdir -p output
-          mv dist/* output/
-
-      - name: Upload Binaries to Repository (Optional)
-        run: |
-          mkdir -p binaries
-          cp -r output/* binaries/
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: binary
+          path: dist/main  # Path to the generated binary
