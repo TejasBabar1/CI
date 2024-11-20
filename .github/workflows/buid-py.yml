@@ -29,10 +29,11 @@ jobs:
         run: |
           # Use a Debian-based image and install dependencies
           docker run --rm --platform linux/arm64/v8 -v $PWD:/workspace -w /workspace debian:buster bash -c "
-            # Install required system dependencies
-            apt-get update && apt-get install -y \
-              python3.11 python3.11-dev python3.11-distutils python3-pip \
-              build-essential libssl-dev libffi-dev && \
+            # Add deadsnakes PPA for Python 3.11
+            add-apt-repository ppa:deadsnakes/ppa && \
+            apt-get update && \
+            apt-get install -y python3.11 python3.11-dev python3.11-distutils python3-pip && \
+            
             
             # Install Poetry
             curl -sSL https://install.python-poetry.org | python3.11 && \
