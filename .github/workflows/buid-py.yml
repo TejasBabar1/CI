@@ -17,30 +17,29 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # Set up QEMU for ARM64 emulation
-      - name: Enable QEMU for ARM64 Emulation
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y qemu-user-static
-          docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-
-      # Build ARM64 binary using Docker
+      # Build ARM64 binary using Docker with Debian Buster
       - name: Build Binary with Poetry
         run: |
-          # Use a Debian-based image and install dependencies
           docker run --rm --platform linux/arm64/v8 -v $PWD:/workspace -w /workspace debian:buster bash -c "
-            # Add deadsnakes PPA for Python 3.11
+            # Update package lists and install dependencies
+            apt-get update && apt-get install -y \
+              software-properties-common build-essential libssl-dev libffi-dev curl && \
+            
+            # Add the deadsnakes PPA for Python 3.11
             add-apt-repository ppa:deadsnakes/ppa && \
             apt-get update && \
-            apt-get install -y python3.11 python3.11-dev python3.11-distutils python3-pip && \
             
+            # Install Python 3.11 and necessary packages
+            apt-get install -y python3.11 python3.11-dev python3.11-distutils python3-pip && \
             
             # Install Poetry
             curl -sSL https://install.python-poetry.org | python3.11 && \
             export PATH=/root/.local/bin:\$PATH && \
             
-            # Configure Poetry and install dependencies
+            # Install the poetry-pyinstaller-plugin
             poetry self add poetry-pyinstaller-plugin==1.1.13 && \
+            
+            # Install the dependencies using Poetry
             poetry install && \
             
             # Build the binary using Poetry
