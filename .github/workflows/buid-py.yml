@@ -17,31 +17,31 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # Build ARM64 binary using Docker with Debian Buster
+      # Build Binary with Poetry
       - name: Build Binary with Poetry
         run: |
-          docker run --rm --platform linux/arm64/v8 -v $PWD:/workspace -w /workspace debian:buster bash -c "
-            # Update package lists and install dependencies
+          docker run --rm --platform linux/arm64/v8 -v $PWD:/workspace -w /workspace debian:bullseye-slim bash -c "
+            # Update package lists and install necessary dependencies
             apt-get update && apt-get install -y \
-              software-properties-common build-essential libssl-dev libffi-dev curl && \
-            
-            # Add the deadsnakes PPA for Python 3.11
-            add-apt-repository ppa:deadsnakes/ppa && \
+              software-properties-common build-essential libssl-dev libffi-dev curl lsb-release && \
+
+            # Add the repository for Python 3.11
+            echo 'deb http://deb.debian.org/debian $(lsb_release -c | awk '{print $2}') main' > /etc/apt/sources.list.d/debian-backports.list && \
             apt-get update && \
-            
+
             # Install Python 3.11 and necessary packages
             apt-get install -y python3.11 python3.11-dev python3.11-distutils python3-pip && \
-            
+
             # Install Poetry
             curl -sSL https://install.python-poetry.org | python3.11 && \
             export PATH=/root/.local/bin:\$PATH && \
-            
+
             # Install the poetry-pyinstaller-plugin
             poetry self add poetry-pyinstaller-plugin==1.1.13 && \
-            
-            # Install the dependencies using Poetry
+
+            # Install project dependencies using Poetry
             poetry install && \
-            
+
             # Build the binary using Poetry
             poetry build
           "
