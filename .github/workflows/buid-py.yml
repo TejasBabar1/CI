@@ -1,41 +1,54 @@
-name: Build ARM64 Binary with PyInstaller
+name: Build ARM64 Binary with Poetry
 
 on:
   push:
     branches:
-      - main  # Trigger on pushes to the main branch
+      - main
   pull_request:
     branches:
-      - main  # Trigger on pull requests to the main branch
+      - main
 
 jobs:
   build:
-    runs-on: ubuntu-20.04  # Use Ubuntu 20.04 as the base runner
+    runs-on: ubuntu-20.04
 
     steps:
+      # Checkout the repository
       - name: Checkout Repository
-        uses: actions/checkout@v3  # Checkout the code in the repo
+        uses: actions/checkout@v3
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2  # Set up Docker buildx for ARM64
-
-      # - name: Enable QEMU for ARM64 emulation
-      #   run: |
-      #     sudo apt-get update
-      #     sudo apt-get install -y qemu-user-static
-      #     docker run --rm --privileged multiarch/qemu-user-static --reset -p yes  # Enable QEMU for ARM64 emulation
-
-      - name: Build ARM64 Binary using Compatible glibc
+      # Set up QEMU for ARM64 emulation
+      - name: Enable QEMU for ARM64 Emulation
         run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-user-static
+          docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+
+      # Build ARM64 binary using Docker
+      - name: Build Binary with Poetry
+        run: |
+          # Use a Debian-based image and install dependencies
           docker run --rm --platform linux/arm64/v8 -v $PWD:/workspace -w /workspace debian:buster bash -c "
-            apt-get update && apt-get install -y python3 python3-pip python3-dev build-essential libssl-dev libffi-dev
-            python3 -m pip install --upgrade pip  # Ensure pip is installed
-            pip install pyinstaller
-            pyinstaller --onefile main.py  # Build the binary using PyInstaller
+            # Install required system dependencies
+            apt-get update && apt-get install -y \
+              python3.11 python3.11-dev python3.11-distutils python3-pip \
+              build-essential libssl-dev libffi-dev && \
+            
+            # Install Poetry
+            curl -sSL https://install.python-poetry.org | python3.11 && \
+            export PATH=/root/.local/bin:\$PATH && \
+            
+            # Configure Poetry and install dependencies
+            poetry self add poetry-pyinstaller-plugin==1.1.13 && \
+            poetry install && \
+            
+            # Build the binary using Poetry
+            poetry build
           "
 
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v3  # Upload the generated binary as an artifact
+      # Upload the generated binary as an artifact
+      - name: Upload Binary Artifact
+        uses: actions/upload-artifact@v3
         with:
-          name: binary
-          path: dist/main  # Path to the generated binary inside the dist directory
+          name: poetry-build
+          path: dist/*
