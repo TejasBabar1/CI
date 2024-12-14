@@ -33,6 +33,9 @@ jobs:
             ./configure --prefix=/usr/local --enable-shared LDFLAGS="-Wl,-rpath /usr/local/lib"
             make -j$(nproc)
             make altinstall
+
+          run: |
+            ls usr/local/lib*
       # Upload the generated binary as an artifact
       - name: Upload Binary Artifact
         uses: actions/upload-artifact@v3
