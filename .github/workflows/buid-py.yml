@@ -10,7 +10,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
       # Checkout the repository
@@ -18,34 +18,21 @@ jobs:
         uses: actions/checkout@v3
 
       # Build Binary with Poetry
-      - name: Build Binary with Poetry
-        run: |
-          docker run --rm --platform linux/arm64/v8 -v $PWD:/workspace -w /workspace debian:bullseye-slim bash -c "
-            # Update package lists and install necessary dependencies
-            apt-get update && apt-get install -y \
-              software-properties-common build-essential libssl-dev libffi-dev curl lsb-release && \
-
-            # Add the repository for Python 3.11
-            echo 'deb http://deb.debian.org/debian $(lsb_release -c | awk '{print $2}') main' > /etc/apt/sources.list.d/debian-backports.list && \
-            apt-get update && \
-
-            # Install Python 3.11 and necessary packages
-            apt-get install -y python3.11 python3.11-dev python3.11-distutils python3-pip && \
-
-            # Install Poetry
-            curl -sSL https://install.python-poetry.org | python3.11 && \
-            export PATH=/root/.local/bin:\$PATH && \
-
-            # Install the poetry-pyinstaller-plugin
-            poetry self add poetry-pyinstaller-plugin==1.1.13 && \
-
-            # Install project dependencies using Poetry
-            poetry install && \
-
-            # Build the binary using Poetry
-            poetry build
-          "
-
+      - name: Build on aarch64
+        uses: uraimo/run-on-arch-action@v2
+        with:
+          arch: aarch64
+          distro: ubuntu20.04
+          install: |
+            apt update -y
+            apt install -y build-essential zlib1g-dev \
+            libssl-dev libreadline-dev libffi-dev wget libbz2-dev
+            wget https://www.python.org/ftp/python/3.11.0/Python-3.11.0.tgz
+            tar -xvzf Python-3.11.0.tgz
+            cd Python-3.11.0
+            ./configure --prefix=/usr/local --enable-shared LDFLAGS="-Wl,-rpath /usr/local/lib"
+            make -j$(nproc)
+            make altinstall
       # Upload the generated binary as an artifact
       - name: Upload Binary Artifact
         uses: actions/upload-artifact@v3
