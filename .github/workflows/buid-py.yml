@@ -30,7 +30,7 @@ jobs:
             wget https://www.python.org/ftp/python/3.11.0/Python-3.11.0.tgz
             tar -xvzf Python-3.11.0.tgz
             cd Python-3.11.0
-            ./configure --prefix=/usr/local --enable-shared LDFLAGS="-Wl,-rpath /usr/local/lib"
+            ./configure --enable-optimizations --prefix=/usr/local --enable-shared LDFLAGS="-Wl,-rpath /usr/local/lib"
             make -j$(nproc)
             make altinstall
 
